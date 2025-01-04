@@ -162,7 +162,7 @@ class RecipesViewSet(viewsets.ModelViewSet):
     def get_link(self, request, pk):
         """Полечение короткой ссылки по эндпоинту '/get-link/."""
         data = get_object_or_404(ShortLink, recipe_id=pk).short_link
-        short_link = request.build_absolute_uri(f'{data}/')
+        short_link = f'{request.get_host()}/{data}/'
         return Response({'short-link': short_link}, status=status.HTTP_200_OK)
 
     @action(detail=True, methods=['post', 'delete'])
