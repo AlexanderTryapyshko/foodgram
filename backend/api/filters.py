@@ -12,7 +12,7 @@ class RecipeFilter(filters.FilterSet):
     по нахождению в списке избранного/покупок.
     """
 
-    tags = filters.MultipleChoiceFilter(
+    tags = filters.AllValuesMultipleFilter(
         field_name='tags__slug',
         lookup_expr='icontains'
     )

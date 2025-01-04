@@ -38,6 +38,14 @@ class CreateUserSerializer(UserCreateSerializer):
             'password'
         )
 
+    def validate(self, data):
+        """Валидатор наличия имени/фамилии."""
+        if 'first_name' not in data:
+            raise serializers.ValidationError('Введите имя')
+        elif 'last_name' not in data:
+            raise serializers.ValidationError('Введите фамилию')
+        return data
+
 
 class UsersGETSerializer(serializers.ModelSerializer):
     """Сериализатор получения объекта пользователя."""
