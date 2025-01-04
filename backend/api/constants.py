@@ -2,8 +2,6 @@
 
 REGULAR = r'^[\w.@+-]+$'
 
-TRAINING_HOSTNAME = 'http://127.0.0.1:8000/s/'
-
 STR_CONST = 25
 
 USER_MAX_LENGHT = 150

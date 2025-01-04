@@ -10,7 +10,6 @@ from rest_framework import filters, permissions, status, views, viewsets
 from rest_framework.decorators import action
 from rest_framework.response import Response
 
-from api.constants import TRAINING_HOSTNAME
 from api.filters import RecipeFilter
 from api.paginations import PageLimitPaginator
 from api.permissions import AllowAnyExceptEndpointMe, ReadOrAuthorOnly
