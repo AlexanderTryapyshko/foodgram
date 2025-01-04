@@ -1,7 +1,6 @@
 """Настройки админки."""
 from django.contrib import admin
 
-from api.constants import TRAINING_HOSTNAME
 from recipes.models import (
     Ingredient,
     Favorite,
@@ -113,4 +112,4 @@ class RecipeAdmin(admin.ModelAdmin):
     def get_short_link(self, instance):
         """Метод для отображения короткой ссылки на рецепт."""
         link = ShortLink.objects.get(recipe=instance).short_link
-        return f'{TRAINING_HOSTNAME}{link}/'
+        return f'/s/{link}/'
