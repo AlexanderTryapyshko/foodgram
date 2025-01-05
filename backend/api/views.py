@@ -143,10 +143,15 @@ class RecipesViewSet(viewsets.ModelViewSet):
     queryset = Recipe.objects.all()
     permission_classes = (ReadOrAuthorOnly,)
     pagination_class = PageLimitPaginator
-    filter_backends = (DjangoFilterBackend, filters.OrderingFilter, )
+    filter_backends = (
+        DjangoFilterBackend,
+        filters.OrderingFilter,
+        filters.SearchFilter,
+    )
     filterset_class = RecipeFilter
     ordering_fields = ('created_at')
     ordering = ('-created_at',)
+    search_fields = ('^ingredients__name',)
 
     def get_serializer_class(self):
         """Определение класса сериализатора в зависимости от запроса."""
@@ -222,5 +227,5 @@ class RedirectShortLinkView(views.View):
         )
         recipe_id = short_link_recipe.recipe_id
         return redirect(
-            request.build_absolute_uri(f'/api/recipes/{recipe_id}/')
+            request.build_absolute_uri(f'/recipes/{recipe_id}/')
         )
