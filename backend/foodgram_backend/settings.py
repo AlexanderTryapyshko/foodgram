@@ -15,8 +15,9 @@ SECRET_KEY = os.getenv('SECRET_KEY', get_random_secret_key())
 
 DEBUG = get_debug()
 
-# ALLOWED_HOSTS = ['*']
 ALLOWED_HOSTS = get_allowed_hosts()
+
+CSRF_TRUSTED_ORIGINS = ['https://tryapsfood.hopto.org']
 
 AUTH_USER_MODEL = 'users.User'
 
@@ -79,13 +80,6 @@ DATABASES = {
         'PORT': os.getenv('DB_PORT', 5432)
     }
 }
-
-# DATABASES = {
-#     'default': {
-#         'ENGINE': 'django.db.backends.sqlite3',
-#         'NAME': BASE_DIR / 'db.sqlite3',
-#     }
-# }
 
 AUTH_PASSWORD_VALIDATORS = [
     {
