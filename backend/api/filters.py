@@ -29,6 +29,12 @@ class RecipeFilter(filters.FilterSet):
         method='filter_my_recipes'
     )
 
+    class Meta:
+        """Класс Meta для фильтра модели рецептов."""
+
+        model = Recipe
+        fields = ('tags', 'author', 'is_favorited', 'is_in_shopping_cart')
+
     def filter_my_recipes(self, queryset, request, value):
         """Метод для фильтрации по избранному/списку покупок."""
         if self.request.user.is_authenticated:
@@ -38,16 +44,10 @@ class RecipeFilter(filters.FilterSet):
             )
             if is_favorited == '1':
                 queryset = queryset.filter(
-                    favorites_recipe__user=self.request.user
+                    favorites__user=self.request.user
                 )
             if is_in_shopping_cart == '1':
                 queryset = queryset.filter(
-                    shoppings_recipe__user=self.request.user
+                    shoppingcarts__user=self.request.user
                 )
-        return queryset.distinct()
-
-    class Meta:
-        """Класс Meta для фильтра модели рецептов."""
-
-        model = Recipe
-        fields = ('tags', 'author', 'is_favorited', 'is_in_shopping_cart')
+        return queryset

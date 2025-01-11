@@ -3,10 +3,10 @@ from django.urls import include, path
 from rest_framework.routers import SimpleRouter
 
 from api.views import (
-    UserViewSet,
-    RecipesViewSet,
     IngredientsViewSet,
-    TagsViewSet
+    RecipesViewSet,
+    TagsViewSet,
+    UserViewSet
 )
 
 app_name = 'api'

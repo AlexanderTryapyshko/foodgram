@@ -1,6 +1,7 @@
 """Настройки админки."""
 from django.contrib import admin
 
+from api.constants import MIN_NUM
 from recipes.models import (
     Ingredient,
     Favorite,
@@ -18,6 +19,7 @@ class IngredientInLine(admin.TabularInline):
 
     model = RecipeIngredient
     extra = 0
+    min_num = MIN_NUM
 
 
 class TagInLine(admin.TabularInline):
@@ -25,6 +27,7 @@ class TagInLine(admin.TabularInline):
 
     model = RecipeTag
     extra = 0
+    min_num = MIN_NUM
 
 
 class FavoriteInLine(admin.TabularInline):
@@ -85,22 +88,17 @@ class RecipeAdmin(admin.ModelAdmin):
     @admin.display(description='Ингредиенты')
     def get_ingredient(self, instance):
         """Метод для отображения ингредиентов."""
-        return ', '.join(
-            str(element.name) for element in instance.ingredients.all()
-        )
+        return ', '.join(value.name for value in instance.ingredients.all())
 
     @admin.display(description='Теги')
     def get_tag(self, instance):
         """Метод для отображения тегов."""
-        return ', '.join(str(element.name) for element in instance.tags.all())
+        return ', '.join(value.name for value in instance.tags.all())
 
     @admin.display(description='В избранном')
     def get_is_favorited_count(self, instance):
         """Метод для отображения количества добавлений рецепта в избранное."""
-        count = 0
-        for recipe in Favorite.objects.all():
-            if instance.pk == recipe.recipe_id:
-                count += 1
+        count = Favorite.objects.filter(recipe_id=instance.pk).count()
         if count == 1:
             return f'У {count} пользователя.'
         elif count == 0:

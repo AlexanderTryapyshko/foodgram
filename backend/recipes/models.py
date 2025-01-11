@@ -9,6 +9,7 @@ from api.constants import (
     IMAGE_UPLOAD_DIRECTORY,
     ING_TAG_NAME_MAX_LENGTH,
     MAX_UNIT,
+    MIN_NUM,
     REC_NAME_MAX_LENGTH,
     SHORT_LINK_LENGTH,
     STR_CONST
@@ -30,6 +31,12 @@ class Ingredient(models.Model):
 
         verbose_name = 'Ингредиент'
         verbose_name_plural = 'Ингредиенты'
+        constraints = (
+            models.UniqueConstraint(
+                fields=['name', 'measurement_unit'],
+                name='unique_ingredients'
+            ),
+        )
 
     def __str__(self):
         """Переопределение метода __str__."""
@@ -67,10 +74,11 @@ class Recipe(models.Model):
         'Время приготовления в минутах',
         validators=(
             MinValueValidator(
-                1, message='Время приготовления не менее 1 минуты'
+                MIN_NUM,
+                message=f'Время приготовления не менее {MIN_NUM} минуты'
             ),
         ),
-        default=1,
+        default=MIN_NUM,
     )
     author = models.ForeignKey(
         User,
@@ -90,14 +98,6 @@ class Recipe(models.Model):
     created_at = models.DateTimeField(
         auto_now_add=True,
         verbose_name='Создан'
-    )
-    is_favorited = models.BooleanField(
-        verbose_name='В избранном',
-        default=False
-    )
-    is_in_shopping_cart = models.BooleanField(
-        verbose_name='В списке покупок',
-        default=False
     )
 
     class Meta:
@@ -120,22 +120,21 @@ class RecipeIngredient(models.Model):
         Recipe,
         on_delete=models.CASCADE,
         verbose_name='Рецепт',
-        related_name='recipeingredient_recipe'
     )
     ingredient = models.ForeignKey(
         Ingredient,
         on_delete=models.CASCADE,
         verbose_name='Ингредиент',
-        related_name='recipeingredient_ingredient'
     )
     amount = models.PositiveSmallIntegerField(
         'Количество',
         validators=(
             MinValueValidator(
-                1, message='Кол-во ингредиентов не менее 1'
+                MIN_NUM,
+                message=f'Количество ингредиентов не менее {MIN_NUM}'
             ),
         ),
-        default=1,
+        default=MIN_NUM,
     )
 
     class Meta:
@@ -143,6 +142,7 @@ class RecipeIngredient(models.Model):
 
         verbose_name = 'Наличие ингредиента в рецепте'
         verbose_name_plural = 'Наличие ингредиентов в рецепте'
+        default_related_name = 'recipeingredients'
         ordering = ('recipe',)
 
     def __str__(self):
@@ -157,13 +157,11 @@ class RecipeTag(models.Model):
         Recipe,
         on_delete=models.CASCADE,
         verbose_name='Рецепт',
-        related_name='recipetag_recipe'
     )
     tag = models.ForeignKey(
         Tag,
         on_delete=models.CASCADE,
         verbose_name='Тег',
-        related_name='recipetag_tag'
     )
 
     class Meta:
@@ -171,6 +169,7 @@ class RecipeTag(models.Model):
 
         verbose_name = 'Соответствие тега и рецепта'
         verbose_name_plural = 'Соответствие тегов и рецептов'
+        default_related_name = 'recipetags'
         ordering = ('recipe',)
 
     def __str__(self):
@@ -184,12 +183,10 @@ class Favorite(models.Model):
     recipe = models.ForeignKey(
         Recipe,
         on_delete=models.CASCADE,
-        related_name='favorites_recipe'
     )
     user = models.ForeignKey(
         User,
         on_delete=models.CASCADE,
-        related_name='favorites_user'
     )
 
     class Meta:
@@ -197,6 +194,13 @@ class Favorite(models.Model):
 
         verbose_name = 'Избранное'
         verbose_name_plural = 'Избранные'
+        default_related_name = 'favorites'
+        constraints = (
+            models.UniqueConstraint(
+                fields=['recipe', 'user'],
+                name='unique_favorites'
+            ),
+        )
 
     def __str__(self):
         """Переопределение метода __str__."""
@@ -211,12 +215,10 @@ class ShoppingCart(models.Model):
     recipe = models.ForeignKey(
         Recipe,
         on_delete=models.CASCADE,
-        related_name='shoppings_recipe'
     )
     user = models.ForeignKey(
         User,
         on_delete=models.CASCADE,
-        related_name='shoppings_user'
     )
 
     class Meta:
@@ -224,6 +226,13 @@ class ShoppingCart(models.Model):
 
         verbose_name = 'Список покупок'
         verbose_name_plural = 'Списки покупок'
+        default_related_name = 'shoppingcarts'
+        constraints = (
+            models.UniqueConstraint(
+                fields=['recipe', 'user'],
+                name='unique_shoppings'
+            ),
+        )
 
     def __str__(self):
         """Переопределение метода __str__."""

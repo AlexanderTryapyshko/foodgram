@@ -3,7 +3,7 @@ import csv
 
 from django.core.management.base import BaseCommand
 
-from foodgram_backend.settings import BASE_DIR
+from api.constants import DIRECTORY
 from recipes.models import Ingredient
 
 TABLES = {Ingredient: 'ingredients.csv'}
@@ -16,7 +16,7 @@ class Command(BaseCommand):
         """handle."""
         for model, file in TABLES.items():
             with open(
-                f'{BASE_DIR}/data/{file}',
+                f'{DIRECTORY}{file}',
                 'r',
                 encoding='utf-8'
             ) as csv_file:

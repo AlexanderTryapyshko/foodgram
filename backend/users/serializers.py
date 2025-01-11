@@ -3,7 +3,7 @@ from djoser.serializers import UserCreateSerializer
 from rest_framework import serializers
 
 from api.constants import USER_MAX_LENGHT
-from users.models import Subscribe, User
+from users.models import User
 
 
 class CreateUserSerializer(UserCreateSerializer):
@@ -42,7 +42,7 @@ class CreateUserSerializer(UserCreateSerializer):
         """Валидатор наличия имени/фамилии."""
         if 'first_name' not in data:
             raise serializers.ValidationError('Введите имя')
-        elif 'last_name' not in data:
+        if 'last_name' not in data:
             raise serializers.ValidationError('Введите фамилию')
         return data
 
@@ -69,11 +69,10 @@ class UsersGETSerializer(serializers.ModelSerializer):
     def get_is_subscribed(self, obj):
         """Метод определения подписки пользователя на автора рецепта."""
         request = self.context.get('request')
-        if request.user.is_anonymous:
-            return False
-        return Subscribe.objects.filter(
-            author=obj,
-            user=request.user).exists()
+        return (
+            request.user.is_authenticated 
+            and obj.subscribe_author.filter(user=request.user).exists()
+        )
 
 
 class SetPasswordSerializer(serializers.Serializer):

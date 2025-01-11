@@ -1,6 +1,8 @@
 """Валидаторы проекта foodgram."""
 from django.core.exceptions import ValidationError
 
+from api.constants import MIN_NUM
+
 
 def validate_cooking_time(value):
     """
@@ -8,5 +10,11 @@ def validate_cooking_time(value):
 
     Проверяет, чтобы указанное время приготовления было не менее 1 минуты.
     """
-    if value < 1:
-        raise ValidationError(f'{value} не может быть меньше 1 минуты')
+    if value < MIN_NUM:
+        raise ValidationError(
+            f'{value} не может быть меньше {MIN_NUM} минуты'
+        )
+
+def validate_username(value):
+    if value.lower() == 'me':
+        raise ValidationError(f'Поле "username" не может быть равно "me"')

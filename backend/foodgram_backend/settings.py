@@ -17,7 +17,7 @@ DEBUG = get_debug()
 
 ALLOWED_HOSTS = get_allowed_hosts()
 
-CSRF_TRUSTED_ORIGINS = ['https://tryapsfood.hopto.org']
+CSRF_TRUSTED_ORIGINS = [f'https://{get_allowed_hosts()}']
 
 AUTH_USER_MODEL = 'users.User'
 

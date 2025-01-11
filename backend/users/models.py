@@ -1,22 +1,36 @@
 """Модели приложения пользователя."""
 from django.contrib.auth.models import AbstractUser
+from django.core.validators import RegexValidator
 from django.db import models
 
-from api.constants import STR_CONST
+from api.constants import REGULAR, STR_CONST
+from api.validators import validate_username
 
 
 class User(AbstractUser):
     """Модель Пользователя."""
+
+    USERNAME_FIELD = 'email'
+    EMAIL_FIELD = 'email'
+    REQUIRED_FIELDS = ['username', 'first_name', 'last_name']
+
+    username = models.CharField(
+        max_length=150,
+        verbose_name='Имя пользователя',
+        unique=True,
+        validators=[
+            validate_username,
+            RegexValidator(
+            regex=REGULAR,
+            message='Имя пользователя содержит недопустимый символ'
+        )]
+    )
 
     avatar = models.ImageField(
         upload_to='users/avatars/',
         blank=True
     )
     email = models.EmailField(unique=True)
-
-    USERNAME_FIELD = 'email'
-    EMAIL_FIELD = 'email'
-    REQUIRED_FIELDS = ['username', 'first_name', 'last_name']
 
     class Meta:
         """Meta для модели пользователя."""
@@ -51,6 +65,7 @@ class Subscribe(models.Model):
 
         verbose_name = 'Подписчик'
         verbose_name_plural = 'Подписчики'
+        ordering = ('author__username',)
         constraints = [
             models.UniqueConstraint(
                 fields=['user', 'author'],

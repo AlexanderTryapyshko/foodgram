@@ -1,9 +1,8 @@
 """Views проекта foodgram."""
-import csv
 
 from django.contrib.auth.hashers import check_password
+from django.db.models import Sum
 from django_filters.rest_framework import DjangoFilterBackend
-from django.http import HttpResponse
 from django.shortcuts import get_object_or_404, redirect
 from djoser.views import UserViewSet
 from rest_framework import filters, permissions, status, views, viewsets
@@ -16,16 +15,19 @@ from api.permissions import AllowAnyExceptEndpointMe, ReadOrAuthorOnly
 from api.serializers import (
     AvatarSerializer,
     CreateRecipeSerializer,
+    FavoriteSerializer,
     IngredientsSerializer,
     RecipesGETSerializer,
+    ShoppingCartSerializer,
     SubscribeUserSerializer,
     TagsSerializer
 )
-from api.utils import favorite_shopping_cart_recipe, shopping_cart
+from api.utils import favorite_shopping_cart_recipe, shoppings_in_file
 from recipes.models import (
     Ingredient,
     Favorite,
     Recipe,
+    RecipeIngredient,
     ShoppingCart,
     ShortLink,
     Tag
@@ -47,7 +49,7 @@ class UserViewSet(UserViewSet):
 
     def get_serializer_class(self):
         """Определение класса сериализатора в зависимости от запроса."""
-        if self.request.method == 'GET':
+        if self.request.method in permissions.SAFE_METHODS:
             return UsersGETSerializer
         return CreateUserSerializer
 
@@ -79,14 +81,13 @@ class UserViewSet(UserViewSet):
         """Метод смены/удаления аватара."""
         if request.method == 'PUT':
             serializer = AvatarSerializer(request.user, data=request.data)
-            if serializer.is_valid(raise_exception=True):
-                serializer.save()
-                return Response(
-                    {'avatar': request.build_absolute_uri(
-                        request.user.avatar.url)})
-        if request.method == 'DELETE':
-            request.user.avatar.delete()
-            return Response(status=status.HTTP_204_NO_CONTENT)
+            serializer.is_valid(raise_exception=True)
+            serializer.save()
+            return Response(
+                {'avatar': request.build_absolute_uri(
+                    request.user.avatar.url)})
+        request.user.avatar.delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)
 
     @action(detail=False)
     def subscriptions(self, request):
@@ -110,38 +111,34 @@ class UserViewSet(UserViewSet):
         """Подписка/отписка на определенного пользователя."""
         author = get_object_or_404(User, id=id)
         user = request.user
+        serializer = SubscribeUserSerializer(
+            author,
+            data={'user': user},
+            context={'request': request, 'author': author}
+        )
+        serializer.is_valid(raise_exception=True)
         if request.method == 'POST':
-            if author == user:
-                return Response(status=status.HTTP_400_BAD_REQUEST)
-            serializer = SubscribeUserSerializer(
-                author,
-                data={'user': user},
-                context={'request': request, 'author': author}
-            )
-            serializer.is_valid(raise_exception=True)
-            if Subscribe.objects.filter(
-                user=request.user, author=author
-            ).exists():
-                return Response(status=status.HTTP_400_BAD_REQUEST)
-            Subscribe.objects.create(user=request.user, author=author)
-            return Response(
-                data=serializer.data,
+            serializer.create(validated_data={'author': author, 'user': user})
+            serializer.save()
+            return Response(data=serializer.data,
                 status=status.HTTP_201_CREATED
             )
-        if request.method == 'DELETE':
-            user_author = Subscribe.objects.filter(
-                user=request.user, author=author)
-            if user_author:
-                user_author.delete()
-                return Response(status=status.HTTP_204_NO_CONTENT)
-            return Response(status=status.HTTP_400_BAD_REQUEST)
+        user_author = Subscribe.objects.filter(
+            user=request.user, author=author)
+        if user_author:
+            user_author.delete()
+            return Response(status=status.HTTP_204_NO_CONTENT)
+        return Response(status=status.HTTP_400_BAD_REQUEST)
 
 
 class RecipesViewSet(viewsets.ModelViewSet):
     """Вьюсет для модели рецептов."""
 
     queryset = Recipe.objects.all()
-    permission_classes = (ReadOrAuthorOnly,)
+    permission_classes = (
+        ReadOrAuthorOnly,
+        permissions.IsAuthenticatedOrReadOnly,
+    )
     pagination_class = PageLimitPaginator
     filter_backends = (
         DjangoFilterBackend,
@@ -173,28 +170,43 @@ class RecipesViewSet(viewsets.ModelViewSet):
     @action(detail=True, methods=['post', 'delete'])
     def shopping_cart(self, request, pk=None):
         """Добавление рецепта в список покупок."""
-        return favorite_shopping_cart_recipe(ShoppingCart, request, pk)
+        return favorite_shopping_cart_recipe(
+            ShoppingCart,
+            ShoppingCartSerializer,
+            request,
+            pk
+        )
 
     @action(detail=True, methods=['post', 'delete'])
     def favorite(self, request, pk=None):
         """Добавление рецепта в избранное."""
-        return favorite_shopping_cart_recipe(Favorite, request, pk)
+        return favorite_shopping_cart_recipe(
+            Favorite,
+            FavoriteSerializer,
+            request,
+            pk
+        )
 
     @action(detail=False, permission_classes=(permissions.IsAuthenticated,))
     def download_shopping_cart(self, request):
         """Метод для скачивания списпа ингредиентов."""
-        response = HttpResponse(content_type='text/csv')
-        response['Content-Disposition'] = (
-            'attachment; filename="shopping_cart.csv"'
-        )
-        writer = csv.writer(response)
-        writer.writerow(['ингредиент', 'единица измерения', 'количество'])
-        shopping_cart_ingredients = shopping_cart(self.request.user)
-        for item, value in shopping_cart_ingredients.items():
-            writer.writerow(
-                [f'{item}, {value["measurement_unit"]}, {value["amount"]}']
+        shopping_cart = {}
+        cart_ingredients = RecipeIngredient.objects.filter(
+            recipe__shoppingcarts__user=request.user
+            ).values(
+                'ingredient__name',
+                'ingredient__measurement_unit'
+            ).annotate(
+                amount=Sum('amount')
+            ).order_by(
+                'ingredient__name'
             )
-        return response
+        for item in cart_ingredients:
+            shopping_cart[item['ingredient__name']] = (
+                f'{item["amount"]} '
+                f'{item["ingredient__measurement_unit"]}'
+            )
+        return shoppings_in_file(shopping_cart)
 
 
 class TagsViewSet(viewsets.ReadOnlyModelViewSet):

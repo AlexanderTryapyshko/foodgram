@@ -5,13 +5,6 @@ from rest_framework import permissions
 class ReadOrAuthorOnly(permissions.BasePermission):
     """Определяет доступ либо для безопасных методов, либо для автора."""
 
-    def has_permission(self, request, view):
-        """has_permission."""
-        return (
-            request.method in permissions.SAFE_METHODS
-            or request.user.is_authenticated
-        )
-
     def has_object_permission(self, request, view, obj):
         """has_object_permission."""
         return (

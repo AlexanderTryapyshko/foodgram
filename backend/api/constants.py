@@ -1,4 +1,7 @@
 """Константы."""
+from django.conf import settings
+
+DIRECTORY = f'{settings.BASE_DIR}/data/'
 
 REGULAR = r'^[\w.@+-]+$'
 
@@ -17,3 +20,7 @@ REC_NAME_MAX_LENGTH = 256
 IMAGE_UPLOAD_DIRECTORY = 'recipes/images/'
 
 SHORT_LINK_LENGTH = 10
+
+MIN_NUM = 1
+
+PAGE_SIZE = 6
