@@ -70,7 +70,7 @@ class UsersGETSerializer(serializers.ModelSerializer):
         """Метод определения подписки пользователя на автора рецепта."""
         request = self.context.get('request')
         return (
-            request.user.is_authenticated 
+            request.user.is_authenticated
             and obj.subscribe_author.filter(user=request.user).exists()
         )
 

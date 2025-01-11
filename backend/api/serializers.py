@@ -93,15 +93,15 @@ class RecipesGETSerializer(serializers.ModelSerializer):
         """Отображение нахождения рецепта в избранном."""
         request = self.context.get('request')
         return (
-            request.user.is_authenticated 
+            request.user.is_authenticated
             and obj.favorites.filter(user=request.user).exists()
         )
-    
+
     def get_is_in_shopping_cart(self, obj):
         """Отображение нахождения рецепта в избранном списке покупок."""
         request = self.context.get('request')
         return (
-            request.user.is_authenticated 
+            request.user.is_authenticated
             and obj.shoppingcarts.filter(user=request.user).exists()
         )
 
@@ -159,7 +159,7 @@ class CreateRecipeSerializer(serializers.ModelSerializer):
             if len(data['ingredients']) != len(unique_ingredients):
                 raise serializers.ValidationError(
                     'Ингредиенты повторяются'
-                )            
+                )
         return data
 
     def validate_tags(self, value):
@@ -285,12 +285,12 @@ class SubscribeUserSerializer(UsersGETSerializer):
             try:
                 recipes_limit = int(recipes_limit)
             except TypeError as e:
-                print (f'Возникла ошибка {e}')
+                print(f'Возникла ошибка {e}')
         recipes = author.recipes.all()[:recipes_limit]
         return ShortRecipeSerializer(
             recipes,
             many=True,
-            context = {'request': request}
+            context={'request': request}
         ).data
 
     def get_recipes_count(self, author):
@@ -340,11 +340,11 @@ class ShoppingCartSerializer(ShortRecipeSerializer):
                 'Рецепт и так отсутствует в списке покупок'
             )
         return data
-    
+
     def create(self, validated_data):
         """Добавление в список покупок."""
         return ShoppingCart.objects.create(**validated_data)
-    
+
 
 class FavoriteSerializer(ShortRecipeSerializer):
     """Добавление в избранное."""
@@ -368,7 +368,7 @@ class FavoriteSerializer(ShortRecipeSerializer):
                 'Рецепт и так отсутствует в избранном'
             )
         return data
-    
+
     def create(self, validated_data):
         """Добавление в избранное."""
         return Favorite.objects.create(**validated_data)

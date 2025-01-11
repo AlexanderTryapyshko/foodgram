@@ -21,9 +21,10 @@ class User(AbstractUser):
         validators=[
             validate_username,
             RegexValidator(
-            regex=REGULAR,
-            message='Имя пользователя содержит недопустимый символ'
-        )]
+                regex=REGULAR,
+                message='Имя пользователя содержит недопустимый символ'
+            )
+        ]
     )
 
     avatar = models.ImageField(

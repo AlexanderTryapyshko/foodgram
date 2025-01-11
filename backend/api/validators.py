@@ -15,6 +15,8 @@ def validate_cooking_time(value):
             f'{value} не может быть меньше {MIN_NUM} минуты'
         )
 
+
 def validate_username(value):
+    """Валидация имени."""
     if value.lower() == 'me':
-        raise ValidationError(f'Поле "username" не может быть равно "me"')
+        raise ValidationError('Поле "username" не может быть равно "me"')

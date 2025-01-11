@@ -120,7 +120,8 @@ class UserViewSet(UserViewSet):
         if request.method == 'POST':
             serializer.create(validated_data={'author': author, 'user': user})
             serializer.save()
-            return Response(data=serializer.data,
+            return Response(
+                data=serializer.data,
                 status=status.HTTP_201_CREATED
             )
         user_author = Subscribe.objects.filter(
@@ -193,14 +194,14 @@ class RecipesViewSet(viewsets.ModelViewSet):
         shopping_cart = {}
         cart_ingredients = RecipeIngredient.objects.filter(
             recipe__shoppingcarts__user=request.user
-            ).values(
-                'ingredient__name',
-                'ingredient__measurement_unit'
-            ).annotate(
-                amount=Sum('amount')
-            ).order_by(
-                'ingredient__name'
-            )
+        ).values(
+            'ingredient__name',
+            'ingredient__measurement_unit'
+        ).annotate(
+            amount=Sum('amount')
+        ).order_by(
+            'ingredient__name'
+        )
         for item in cart_ingredients:
             shopping_cart[item['ingredient__name']] = (
                 f'{item["amount"]} '
