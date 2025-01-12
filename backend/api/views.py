@@ -18,7 +18,8 @@ from api.serializers import (
     IngredientsSerializer,
     RecipesGETSerializer,
     ShoppingCartSerializer,
-    SubscribeUserSerializer,
+    SubscribeGETSerializer,
+    CreateSubscribeSerializer,
     TagsSerializer
 )
 from api.utils import favorite_shopping_cart_recipe, shoppings_in_file
@@ -94,7 +95,7 @@ class UserViewSet(UserViewSet):
             subscribe_author__user=self.request.user
         )
         authors = self.paginate_queryset(queryset)
-        serializer = SubscribeUserSerializer(
+        serializer = SubscribeGETSerializer(
             authors,
             context={'request': request},
             many=True
@@ -109,14 +110,12 @@ class UserViewSet(UserViewSet):
         """Подписка/отписка на определенного пользователя."""
         author = get_object_or_404(User, id=id)
         user = request.user
-        serializer = SubscribeUserSerializer(
-            author,
-            data={'user': user},
-            context={'request': request, 'author': author}
+        serializer = CreateSubscribeSerializer(
+            data={'user': user.id, 'author': author.id},
+            context={'request': request}
         )
         serializer.is_valid(raise_exception=True)
         if request.method == 'POST':
-            serializer.create(validated_data={'author': author, 'user': user})
             serializer.save()
             return Response(
                 data=serializer.data,

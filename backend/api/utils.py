@@ -15,13 +15,11 @@ def favorite_shopping_cart_recipe(model_name, serializer_name, request, pk):
     recipe = get_object_or_404(Recipe, id=pk)
     user = request.user
     serializer = serializer_name(
-        recipe,
-        data={'user': user},
-        context={'request': request, 'recipe': recipe}
+        data={'user': user.id, 'recipe': recipe.id},
+        context={'request': request}
     )
     serializer.is_valid(raise_exception=True)
     if request.method == 'POST':
-        serializer.create(validated_data={'recipe': recipe, 'user': user})
         serializer.save()
         return Response(
             serializer.data,

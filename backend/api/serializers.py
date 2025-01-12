@@ -237,7 +237,7 @@ class ShortRecipeSerializer(serializers.ModelSerializer):
         fields = ('id', 'name', 'image', 'cooking_time',)
 
 
-class SubscribeUserSerializer(UsersGETSerializer):
+class SubscribeGETSerializer(UsersGETSerializer):
     """Сериализатор для модели подписки."""
 
     recipes = serializers.SerializerMethodField()
@@ -248,33 +248,6 @@ class SubscribeUserSerializer(UsersGETSerializer):
 
         fields = UsersGETSerializer.Meta.fields + ('recipes', 'recipes_count')
         read_only_fields = ['email', 'username', 'first_name', 'last_name']
-
-    def validate(self, data):
-        """Валидация подписки."""
-        author = self.context.get('author')
-        request = self.context.get('request')
-        is_subscribed = request.user.subscribe_user.filter(
-            author=author
-        ).exists()
-        if request.method == 'POST':
-            if request.user == author:
-                raise serializers.ValidationError(
-                    'Нельзя подписаться на себя'
-                )
-            if is_subscribed:
-                raise serializers.ValidationError(
-                    'Вы уже подписаны на пользователя'
-                )
-        if request.method == 'DELETE':
-            if not is_subscribed:
-                raise serializers.ValidationError(
-                    'Вы уже отписаны от пользователя'
-                )
-        return data
-
-    def create(self, validated_data):
-        """Создание подписки."""
-        return Subscribe.objects.create(**validated_data)
 
     def get_recipes(self, author):
         """Отображение рецептов автора."""
@@ -292,6 +265,46 @@ class SubscribeUserSerializer(UsersGETSerializer):
     def get_recipes_count(self, author):
         """Получение количества рецептов у автора."""
         return author.recipes.count()
+
+
+class CreateSubscribeSerializer(serializers.ModelSerializer):
+    """Создание подписки."""
+
+    class Meta:
+        """Meta."""
+
+        model = Subscribe
+        fields = ('user', 'author')
+
+    def validate(self, data):
+        """Валидация подписки."""
+        author_id = data['author'].id
+        request = self.context.get('request')
+        is_subscribed = request.user.subscribe_user.filter(
+            author__id=author_id
+        ).exists()
+        if request.method == 'POST':
+            if request.user.id == author_id:
+                raise serializers.ValidationError(
+                    'Нельзя подписаться на себя'
+                )
+            if is_subscribed:
+                raise serializers.ValidationError(
+                    'Вы уже подписаны на пользователя'
+                )
+        if request.method == 'DELETE':
+            if not is_subscribed:
+                raise serializers.ValidationError(
+                    'Вы уже отписаны от пользователя'
+                )
+        return data
+
+    def to_representation(self, instance):
+        """Ответ запроса."""
+        return SubscribeGETSerializer(
+            instance.author,
+            context={'request': self.context.get('request')}
+        ).data
 
 
 class AvatarSerializer(serializers.ModelSerializer):
@@ -312,20 +325,21 @@ class AvatarSerializer(serializers.ModelSerializer):
         return instance
 
 
-class ShoppingCartSerializer(ShortRecipeSerializer):
+class ShoppingCartSerializer(serializers.ModelSerializer):
     """Добавление в список покупок."""
 
-    class Meta(ShortRecipeSerializer.Meta):
+    class Meta:
         """Meta."""
 
-        fields = ShortRecipeSerializer.Meta.fields
+        model = ShoppingCart
+        fields = ('user', 'recipe')
 
     def validate(self, data):
         """Наличие в списке покупок."""
-        recipe = self.context.get('recipe')
+        recipe_id = data['recipe'].id
         request = self.context.get('request')
         is_in_shopping_cart = request.user.shoppingcarts.filter(
-            recipe=recipe
+            recipe__id=recipe_id
         ).exists()
         if is_in_shopping_cart and request.method == 'POST':
             raise serializers.ValidationError(
@@ -337,17 +351,13 @@ class ShoppingCartSerializer(ShortRecipeSerializer):
             )
         return data
 
-    def create(self, validated_data):
-        """Добавление в список покупок."""
-        return ShoppingCart.objects.create(**validated_data)
-
     def to_representation(self, instance):
         """Изменение ответа api."""
         request = self.context.get('request')
-        recipe = self.context.get('recipe')
+        recipe = instance.recipe
         image = request.build_absolute_uri(recipe.image.url)
         serializer_data = ShortRecipeSerializer(
-            instance,
+            instance.recipe,
             context={'request': request},
         ).data
         modified_data = {
@@ -357,19 +367,22 @@ class ShoppingCartSerializer(ShortRecipeSerializer):
         return modified_data
 
 
-class FavoriteSerializer(ShortRecipeSerializer):
+class FavoriteSerializer(serializers.ModelSerializer):
     """Добавление в избранное."""
 
-    class Meta(ShortRecipeSerializer.Meta):
+    class Meta:
         """Meta."""
 
-        fields = ShortRecipeSerializer.Meta.fields
+        model = Favorite
+        fields = ('user', 'recipe')
 
     def validate(self, data):
         """Наличие в избранном."""
-        recipe = self.context.get('recipe')
+        recipe_id = data['recipe'].id
         request = self.context.get('request')
-        is_favorited = request.user.favorites.filter(recipe=recipe).exists()
+        is_favorited = request.user.favorites.filter(
+            recipe__id=recipe_id
+        ).exists()
         if is_favorited and request.method == 'POST':
             raise serializers.ValidationError(
                 'Рецепт уже добавлен в избранное'
@@ -380,17 +393,13 @@ class FavoriteSerializer(ShortRecipeSerializer):
             )
         return data
 
-    def create(self, validated_data):
-        """Добавление в избранное."""
-        return Favorite.objects.create(**validated_data)
-
     def to_representation(self, instance):
         """Изменение ответа api."""
         request = self.context.get('request')
-        recipe = self.context.get('recipe')
+        recipe = instance.recipe
         image = request.build_absolute_uri(recipe.image.url)
         serializer_data = ShortRecipeSerializer(
-            instance,
+            instance.recipe,
             context={'request': request},
         ).data
         modified_data = {
