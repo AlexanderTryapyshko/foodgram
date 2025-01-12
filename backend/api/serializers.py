@@ -149,14 +149,15 @@ class CreateRecipeSerializer(serializers.ModelSerializer):
                 raise serializers.ValidationError(
                     'В запросе отсутствует поле tags'
                 )
+            all_ingredients = data['ingredients']
             unique_ingredients = set(
-                element['id'] for element in data['ingredients']
+                element['id'] for element in all_ingredients
             )
-            if len(data['ingredients']) == 0:
+            if not all_ingredients:
                 raise serializers.ValidationError(
                     'Необходимо добавить хотя бы один ингредиент'
                 )
-            if len(data['ingredients']) != len(unique_ingredients):
+            if len(all_ingredients) != len(unique_ingredients):
                 raise serializers.ValidationError(
                     'Ингредиенты повторяются'
                 )
@@ -165,7 +166,7 @@ class CreateRecipeSerializer(serializers.ModelSerializer):
     def validate_tags(self, value):
         """Валидация наличия тегов в рецепте."""
         unique_tags = set(value)
-        if len(value) == 0:
+        if not value:
             raise serializers.ValidationError(
                 'Необходимо добавить хотя бы один тег'
             )
@@ -186,14 +187,12 @@ class CreateRecipeSerializer(serializers.ModelSerializer):
     def create_recipe_ingredient(self, ingredients, recipe):
         """Метод создания связки 'Рецепт-Ингредиент'."""
         RecipeIngredient.objects.bulk_create(
-            [
-                RecipeIngredient(
-                    ingredient=ingredient.get('id'),
-                    recipe=recipe,
-                    amount=ingredient.get('amount')
-                )
-                for ingredient in ingredients
-            ]
+            RecipeIngredient(
+                ingredient=ingredient.get('id'),
+                recipe=recipe,
+                amount=ingredient.get('amount')
+            )
+            for ingredient in ingredients
         )
 
     def create(self, validated_data):
@@ -280,13 +279,10 @@ class SubscribeUserSerializer(UsersGETSerializer):
     def get_recipes(self, author):
         """Отображение рецептов автора."""
         request = self.context.get('request')
+        recipes = author.recipes.all()
         recipes_limit = request.query_params.get('recipes_limit')
-        if recipes_limit:
-            try:
-                recipes_limit = int(recipes_limit)
-            except TypeError as e:
-                print(f'Возникла ошибка {e}')
-        recipes = author.recipes.all()[:recipes_limit]
+        if recipes_limit and recipes_limit.isdigit():
+            recipes = recipes[:int(recipes_limit)]
         return ShortRecipeSerializer(
             recipes,
             many=True,
@@ -345,6 +341,21 @@ class ShoppingCartSerializer(ShortRecipeSerializer):
         """Добавление в список покупок."""
         return ShoppingCart.objects.create(**validated_data)
 
+    def to_representation(self, instance):
+        """Изменение ответа api."""
+        request = self.context.get('request')
+        recipe = self.context.get('recipe')
+        image = request.build_absolute_uri(recipe.image.url)
+        serializer_data = ShortRecipeSerializer(
+            instance,
+            context={'request': request},
+        ).data
+        modified_data = {
+            **serializer_data,
+            'image': image
+        }
+        return modified_data
+
 
 class FavoriteSerializer(ShortRecipeSerializer):
     """Добавление в избранное."""
@@ -372,3 +383,18 @@ class FavoriteSerializer(ShortRecipeSerializer):
     def create(self, validated_data):
         """Добавление в избранное."""
         return Favorite.objects.create(**validated_data)
+
+    def to_representation(self, instance):
+        """Изменение ответа api."""
+        request = self.context.get('request')
+        recipe = self.context.get('recipe')
+        image = request.build_absolute_uri(recipe.image.url)
+        serializer_data = ShortRecipeSerializer(
+            instance,
+            context={'request': request},
+        ).data
+        modified_data = {
+            **serializer_data,
+            'image': image
+        }
+        return modified_data

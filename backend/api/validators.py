@@ -1,7 +1,7 @@
 """Валидаторы проекта foodgram."""
 from django.core.exceptions import ValidationError
 
-from api.constants import MIN_NUM
+from api.constants import BAD_USERNAME, MIN_NUM
 
 
 def validate_cooking_time(value):
@@ -18,5 +18,7 @@ def validate_cooking_time(value):
 
 def validate_username(value):
     """Валидация имени."""
-    if value.lower() == 'me':
-        raise ValidationError('Поле "username" не может быть равно "me"')
+    if value == BAD_USERNAME:
+        raise ValidationError(
+            f'Поле "username" не может быть равно {BAD_USERNAME}'
+        )

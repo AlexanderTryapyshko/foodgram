@@ -1,7 +1,6 @@
 """Views проекта foodgram."""
 
 from django.contrib.auth.hashers import check_password
-from django.db.models import Sum
 from django_filters.rest_framework import DjangoFilterBackend
 from django.shortcuts import get_object_or_404, redirect
 from djoser.views import UserViewSet
@@ -27,7 +26,6 @@ from recipes.models import (
     Ingredient,
     Favorite,
     Recipe,
-    RecipeIngredient,
     ShoppingCart,
     ShortLink,
     Tag
@@ -191,23 +189,7 @@ class RecipesViewSet(viewsets.ModelViewSet):
     @action(detail=False, permission_classes=(permissions.IsAuthenticated,))
     def download_shopping_cart(self, request):
         """Метод для скачивания списпа ингредиентов."""
-        shopping_cart = {}
-        cart_ingredients = RecipeIngredient.objects.filter(
-            recipe__shoppingcarts__user=request.user
-        ).values(
-            'ingredient__name',
-            'ingredient__measurement_unit'
-        ).annotate(
-            amount=Sum('amount')
-        ).order_by(
-            'ingredient__name'
-        )
-        for item in cart_ingredients:
-            shopping_cart[item['ingredient__name']] = (
-                f'{item["amount"]} '
-                f'{item["ingredient__measurement_unit"]}'
-            )
-        return shoppings_in_file(shopping_cart)
+        return shoppings_in_file(request)
 
 
 class TagsViewSet(viewsets.ReadOnlyModelViewSet):

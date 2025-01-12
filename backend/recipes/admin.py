@@ -101,10 +101,9 @@ class RecipeAdmin(admin.ModelAdmin):
         count = Favorite.objects.filter(recipe_id=instance.pk).count()
         if count == 1:
             return f'У {count} пользователя.'
-        elif count == 0:
+        if count == 0:
             return 'Не встречается.'
-        else:
-            return f'У {count} пользователей.'
+        return f'У {count} пользователей.'
 
     @admin.display(description='Короткая ссылка на рецепт')
     def get_short_link(self, instance):
