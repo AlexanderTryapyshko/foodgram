@@ -212,14 +212,21 @@ class TagsViewSet(viewsets.ReadOnlyModelViewSet):
 
 
 class IngredientsViewSet(viewsets.ReadOnlyModelViewSet):
-    """Вьюсет для модели ингредиентов."""
-
     queryset = Ingredient.objects.all()
     serializer_class = IngredientsSerializer
     pagination_class = None
-    filter_backends = (DjangoFilterBackend, IngredientSearchFilter,)
-    filterset_fields = ['name']
+    filter_backends = (IngredientSearchFilter,)
     search_fields = ('^name',)
+
+# class IngredientsViewSet(viewsets.ReadOnlyModelViewSet):
+#     """Вьюсет для модели ингредиентов."""
+
+#     queryset = Ingredient.objects.all()
+#     serializer_class = IngredientsSerializer
+#     pagination_class = None
+#     filter_backends = (DjangoFilterBackend, IngredientSearchFilter,)
+#     filterset_fields = ['name']
+#     search_fields = ('^name',)
 
 
 class RedirectShortLinkView(views.View):
