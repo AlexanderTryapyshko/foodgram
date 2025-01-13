@@ -1,13 +1,12 @@
 """Утилиты проекта foodgram."""
 import csv
 
-from django.db.models import Sum
 from django.http import HttpResponse
 from django.shortcuts import get_object_or_404
 from rest_framework import status
 from rest_framework.response import Response
 
-from recipes.models import Recipe, RecipeIngredient
+from recipes.models import Recipe
 
 
 def favorite_shopping_cart_recipe(model_name, serializer_name, request, pk):
@@ -32,20 +31,10 @@ def favorite_shopping_cart_recipe(model_name, serializer_name, request, pk):
     return Response(status=status.HTTP_400_BAD_REQUEST)
 
 
-def shoppings_in_file(request):
+def shoppings_in_file(cart):
     """Формирование списка покупок пользователя."""
     shopping_cart = {}
-    cart_ingredients = RecipeIngredient.objects.filter(
-        recipe__shoppingcarts__user=request.user
-    ).values(
-        'ingredient__name',
-        'ingredient__measurement_unit'
-    ).annotate(
-        amount=Sum('amount')
-    ).order_by(
-        'ingredient__name'
-    )
-    for item in cart_ingredients:
+    for item in cart:
         shopping_cart[item['ingredient__name']] = (
             f'{item["amount"]} '
             f'{item["ingredient__measurement_unit"]}'

@@ -353,18 +353,9 @@ class ShoppingCartSerializer(serializers.ModelSerializer):
 
     def to_representation(self, instance):
         """Изменение ответа api."""
-        request = self.context.get('request')
-        recipe = instance.recipe
-        image = request.build_absolute_uri(recipe.image.url)
-        serializer_data = ShortRecipeSerializer(
-            instance.recipe,
-            context={'request': request},
+        return ShortRecipeSerializer(
+            instance.recipe, context=self.context
         ).data
-        modified_data = {
-            **serializer_data,
-            'image': image
-        }
-        return modified_data
 
 
 class FavoriteSerializer(serializers.ModelSerializer):
@@ -395,15 +386,6 @@ class FavoriteSerializer(serializers.ModelSerializer):
 
     def to_representation(self, instance):
         """Изменение ответа api."""
-        request = self.context.get('request')
-        recipe = instance.recipe
-        image = request.build_absolute_uri(recipe.image.url)
-        serializer_data = ShortRecipeSerializer(
-            instance.recipe,
-            context={'request': request},
+        return ShortRecipeSerializer(
+            instance.recipe, context=self.context
         ).data
-        modified_data = {
-            **serializer_data,
-            'image': image
-        }
-        return modified_data

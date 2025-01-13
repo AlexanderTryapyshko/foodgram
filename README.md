@@ -157,6 +157,8 @@
 
 [Документация к Api](http://tryapsfood.hopto.org/api/docs/)
 
+[Документация к Api](localhost/api/docs/)
+
 [Адрес сайта](https://tryapsfood.hopto.org/)
 
 ### Приятного приготовления!

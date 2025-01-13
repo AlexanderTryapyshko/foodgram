@@ -12,7 +12,7 @@ urlpatterns = [
     path('api/', include('api.urls')),
     path('api/', include('djoser.urls')),
     path('api/auth/', include('djoser.urls.authtoken')),
-    path('s/<str:short_link>/', RedirectShortLinkView.as_view())
+    path('s/<str:short_link>/', RedirectShortLinkView.as_view()),
 ]
 
 if settings.DEBUG:

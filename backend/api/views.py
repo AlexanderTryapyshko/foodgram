@@ -1,6 +1,7 @@
 """Views проекта foodgram."""
 
 from django.contrib.auth.hashers import check_password
+from django.db.models import Sum
 from django_filters.rest_framework import DjangoFilterBackend
 from django.shortcuts import get_object_or_404, redirect
 from djoser.views import UserViewSet
@@ -8,7 +9,7 @@ from rest_framework import filters, permissions, status, views, viewsets
 from rest_framework.decorators import action
 from rest_framework.response import Response
 
-from api.filters import RecipeFilter
+from api.filters import RecipeFilter, IngredientSearchFilter
 from api.paginations import PageLimitPaginator
 from api.permissions import AllowAnyExceptEndpointMe, ReadOrAuthorOnly
 from api.serializers import (
@@ -27,6 +28,7 @@ from recipes.models import (
     Ingredient,
     Favorite,
     Recipe,
+    RecipeIngredient,
     ShoppingCart,
     ShortLink,
     Tag
@@ -188,7 +190,17 @@ class RecipesViewSet(viewsets.ModelViewSet):
     @action(detail=False, permission_classes=(permissions.IsAuthenticated,))
     def download_shopping_cart(self, request):
         """Метод для скачивания списпа ингредиентов."""
-        return shoppings_in_file(request)
+        cart_ingredients = RecipeIngredient.objects.filter(
+            recipe__shoppingcarts__user=request.user
+        ).values(
+            'ingredient__name',
+            'ingredient__measurement_unit'
+        ).annotate(
+            amount=Sum('amount')
+        ).order_by(
+            'ingredient__name'
+        )
+        return shoppings_in_file(cart_ingredients)
 
 
 class TagsViewSet(viewsets.ReadOnlyModelViewSet):
@@ -205,7 +217,7 @@ class IngredientsViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = Ingredient.objects.all()
     serializer_class = IngredientsSerializer
     pagination_class = None
-    filter_backends = (DjangoFilterBackend, filters.SearchFilter,)
+    filter_backends = (DjangoFilterBackend, IngredientSearchFilter,)
     filterset_fields = ['name']
     search_fields = ('^name',)
 

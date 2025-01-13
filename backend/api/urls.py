@@ -1,6 +1,6 @@
 """Urls.py."""
-from django.views.generic import TemplateView
 from django.urls import include, path
+from django.views.generic import TemplateView
 from rest_framework.routers import SimpleRouter
 
 from api.views import (
