@@ -58,12 +58,3 @@ class IngredientSearchFilter(SearchFilter):
     """Поиск с начала строки."""
 
     search_param = 'name'
-
-# class IngredientSearchFilter(filters.FilterSet):
-#     """Поиск с начала строки."""
-#     name = filters.CharFilter(field_name='name', lookup_expr='istartswith')
-
-#     class Meta:
-#         """Meta."""
-#         model = Ingredient
-#         fields = ('name', 'measurement_unit')
