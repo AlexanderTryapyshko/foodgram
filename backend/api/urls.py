@@ -20,7 +20,9 @@ router.register('users', UserViewSet, basename='users')
 
 urlpatterns = [
     path('', include(router.urls)),
-    path('docs/', TemplateView.as_view(template_name='redoc.html'),
+    path(
+        'docs/',
+        TemplateView.as_view(template_name='redoc.html'),
         name='redoc'
     ),
 ]
